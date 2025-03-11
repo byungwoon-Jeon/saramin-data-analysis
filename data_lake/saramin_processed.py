@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # S3 설정
 S3_BUCKET = "saramin-data-bucket"
-AWS_REGION = "us-east-1"
+AWS_REGION = "ap-northeast-2"
 
 def get_latest_s3_json_file(s3_client, execution_date):
     """원본 JSON파일이 저장된 S3 버킷에서 가장 최근 JSON파일 가져오기"""

@@ -12,16 +12,16 @@ BASE_URL = "https://oapi.saramin.co.kr/job-search"
 S3_BUCKET = "saramin-data-bucket"
 KST = pendulum.timezone('Asia/Seoul')
 
-def fetch_saramin_job_data(execution_date) -> str:
+def fetch_saramin_job_data(data_interval_end) -> str:
     """
     API 호출하여 데이터를 json 파일로 저장
     """
 
     # 한국 시간으로 변환
-    execution_date_kst = execution_date.astimezone(KST)
+    data_interval_end_kst = data_interval_end.astimezone(KST)
 
-    file_name = f"saramin_raw_data_{execution_date_kst.strftime('%Y_%m_%d_%Hh')}.json"
-    s3_path = f"saramin/raw_data/{execution_date_kst.strftime('%Y/%m/%d/')}{file_name}"
+    file_name = f"saramin_raw_data_{data_interval_end_kst.strftime('%Y_%m_%d_%Hh')}.json"
+    s3_path = f"saramin/raw_data/{data_interval_end_kst.strftime('%Y/%m/%d/')}{file_name}"
 
     params = {
         "access-key": API_KEY,

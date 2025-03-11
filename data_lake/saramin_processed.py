@@ -1,10 +1,10 @@
 import boto3
 import logging
-from pyspark.context import SparkContext
+import sys
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, explode, from_unixtime
 from awsglue.context import GlueContext
-from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
 from datetime import datetime, timedelta
 
 # 로깅 설정
@@ -15,23 +15,10 @@ logger = logging.getLogger(__name__)
 S3_BUCKET = "saramin-data-bucket"
 AWS_REGION = "ap-northeast-2"
 
-def get_latest_s3_json_file(s3_client, execution_date):
-    """원본 JSON파일이 저장된 S3 버킷에서 가장 최근 JSON파일 가져오기"""
-    # 한국 시간 맞추기 UTC+9 (Glue에서 pendulum 사용 시 오류 발생)
-    execution_date_kst = execution_date + timedelta(hours=9)
-    S3_FOLDER = execution_date_kst.strftime('%Y/%m/%d/')
-    prefix = f"saramin/raw_data/{S3_FOLDER}"
-    
-    response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix=prefix)
-    
-    if 'Contents' not in response:
-        logger.warning("No files found in S3.")
-        return None
-
-    # 최신 파일 선택
-    latest_file = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)[0]['Key']
-    logger.info(f"Latest JSON file: {latest_file}")
-    return latest_file
+# s3_path 받아오기
+args = getResolvedOptions(sys.argv, ['s3_path', 'data_interval_end'])
+s3_path = args['s3_path']  # Airflow에서 받은 s3_path
+logger.info(f"Received s3_path from Airflow: {s3_path}")
 
 def process_saramin_job_data():
     """S3에서 JSON 데이터를 가져와 Spark로 처리 후 Parquet 저장"""
@@ -44,17 +31,8 @@ def process_saramin_job_data():
     glueContext = GlueContext(spark.sparkContext)
     s3_client = boto3.client('s3', region_name=AWS_REGION)
     
-    # 실행 날짜 (현재 날짜 기준)
-    execution_date = datetime.now()
-    
-    # 최신 JSON 파일 가져오기
-    latest_json_file = get_latest_s3_json_file(s3_client, execution_date)
-    if not latest_json_file:
-        logger.warning("No JSON files found for processing.")
-        return
-    
     # S3에서 JSON 데이터 읽기
-    s3_uri = f"s3://{S3_BUCKET}/{latest_json_file}"
+    s3_uri = f"s3://{S3_BUCKET}/{s3_path}"
     df = spark.read.option("multiline", "true").json(s3_uri)
 
     # job 필드 explode 처리
@@ -109,9 +87,10 @@ def process_saramin_job_data():
     ])
 
     # S3 저장 경로 설정
-    execution_date_kst = execution_date + timedelta(hours=9)
-    S3_FOLDER = execution_date_kst.strftime('%Y/%m/%d/')
-    server_time = execution_date_kst.strftime("%Y_%m_%d_%Hh")
+    data_interval_end = datetime.strptime(args['data_interval_end'], "%Y-%m-%d %H:%M:%S%z")
+    data_interval_end_kst = data_interval_end + timedelta(hours=9)
+    S3_FOLDER = data_interval_end_kst.strftime('%Y/%m/%d/')
+    server_time = data_interval_end_kst.strftime("%Y_%m_%d_%Hh")
 
     # 최종 파일명
     filename = f"saramin_process_data_{server_time}.parquet"
@@ -143,11 +122,8 @@ def process_saramin_job_data():
         logger.info(f"[SUCCESS] Renamed file to {new_filename}")
 
         # 임시 폴더 삭제 (part-xxxx.parqeut파일도 같이 삭제)
-        response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix=f"saramin/process_data/{S3_FOLDER}temp/")
-        if "Contents" in response:
-            for obj in response["Contents"]:
-                s3_client.delete_object(Bucket=S3_BUCKET, Key=obj["Key"])
-            logger.info("[INFO] Temp folder cleaned up.")
+        s3_client.delete_object(Bucket=S3_BUCKET, Key=parquet_file_key)
+        logger.info("[INFO] Temp file deleted.")
 
     logger.info(f"Uploaded Parquet to S3: {new_filename}")
 

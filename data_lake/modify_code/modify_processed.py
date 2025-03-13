@@ -79,7 +79,7 @@ def process_saramin_job_data():
         .drop("job")  # 기존 중첩된 "job" 컬럼 삭제
     )
     
-    # S3 저장 경로 설정 (하루에 10시부터 20시까지 2시간 간격으로 작동하기에 시간까지 추가했습니다)
+    # S3 저장 경로 설정 및 파티션 설정(하루에 10시부터 20시까지 2시간 간격으로 작동하기에 시간까지 추가했습니다)
     S3_FOLDER = f"year={target_date[:4]}/month={target_date[4:6]}/day={target_date[6:8]}/hour={target_date[8:10]}/"
 
     # 저장 경로

@@ -29,6 +29,7 @@ def trigger_glue_job(**kwargs):
         print(f"Glue Job Started: {job_run_id}")  # 실행된 Glue Job의 ID 출력
     except Exception as e:
         print(f"Glue Job 실행 실패: {str(e)}")
+        raise
 
 # Airflow DAG 설정
 default_args = {
@@ -43,7 +44,7 @@ dag = DAG(
     dag_id="saramin_project_dags",
     default_args=default_args,
     description="Saramin 채용공고 원본 JSON저장 및 Parquet 변환",
-    schedule_interval="0 9-21/2 * * *",  # UTC 기준: 00시~12시, 2시간 간격 실행 / 한국 시간 기준: 09시~21시
+    schedule_interval="0 10-20/2 * * *",  # UTC 기준: 01시~11시, 2시간 간격 실행 / 한국 시간 기준: 10시~20시
     catchup=False, # 과거의 미실행된 DAG는 실행하지 않음 (현재 주기부터 실행됨)
 )
 

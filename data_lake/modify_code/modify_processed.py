@@ -1,6 +1,6 @@
 import logging
 import sys
-from pyspark.sql.functions import col, explode, from_unixtime
+from pyspark.sql.functions import col, explode, lit, from_unixtime, regexp_replace
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.utils import getResolvedOptions
@@ -10,8 +10,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # S3 설정
-S3_BUCKET = "saramin-data-bucket-1"
-AWS_REGION = "us-east-1"
+S3_BUCKET = "saramin-data-bucket"
 
 # s3_path 받아오기
 args = getResolvedOptions(sys.argv, ['s3_path', 'target_date', 'JOB_NAME'])
@@ -26,7 +25,7 @@ spark = glueContext.spark_session
 logger.info(f"Received s3_path from Airflow: {s3_path}")
 logger.info(f"Received target_date from Airflow: {target_date}")
 
-def process_saramin_job_data():
+def main():
     """S3에서 JSON 데이터를 가져와 Spark로 처리 후 Parquet 저장"""
 
     # S3에서 JSON 데이터 읽기
@@ -35,16 +34,16 @@ def process_saramin_job_data():
     df = spark.read.option("multiline", "true").json(s3_uri)
 
     # job 필드 explode 처리
-    df_jobs = df.select(explode(col("jobs.job")).alias("job"))
+    jobs_df = df.select(explode(col("jobs.job")).alias("job"))
 
     # 필터링 (예시: 특정 조건을 만족하는 데이터만 유지)
-    df_filtered = df_jobs.filter(
+    filtered_df = jobs_df.filter(
         (col("job.position.job-mid-code.code").contains("2")) &  # "2"가 포함된 공고만 유지
         col("job.position.industry.code").like("3%")   # "3"으로 시작하는 공고만 유지
     )
 
     # 필요한 컬럼 및 컬럼 이름 지정
-    renamed_df = (df_filtered
+    renamed_df = (filtered_df
         .withColumn("url", col("job.url"))
         .withColumn("keyword", col("job.keyword"))
         .withColumn("id", col("job.id"))
@@ -59,7 +58,7 @@ def process_saramin_job_data():
         .withColumn("industry_code", col("job.position.industry.code"))
         .withColumn("industry_name", col("job.position.industry.name"))
         .withColumn("location_code", col("job.position.location.code"))
-        .withColumn("location_name", col("job.position.location.name"))
+        .withColumn("location_name", regexp_replace(col("job.position.location.name"), "&gt;", ">"))  # '&gt;'를 '>'로 변환
         .withColumn("job_type_code", col("job.position.job-type.code"))
         .withColumn("job_type_name", col("job.position.job-type.name"))
         .withColumn("job_mid_code", col("job.position.job-mid-code.code"))
@@ -79,17 +78,26 @@ def process_saramin_job_data():
         .drop("job")  # 기존 중첩된 "job" 컬럼 삭제
     )
     
-    # S3 저장 경로 설정 및 파티션 설정(하루에 10시부터 20시까지 2시간 간격으로 작동하기에 시간까지 추가했습니다)
-    S3_FOLDER = f"year={target_date[:4]}/month={target_date[4:6]}/day={target_date[6:8]}/hour={target_date[8:10]}/"
+    # target_date를 분리하여 새로운 컬럼 추가
+    partitioned_df = (renamed_df
+        .withColumn("year", lit(target_date[:4]))    # 연도
+        .withColumn("month", lit(target_date[4:6]))  # 월
+        .withColumn("day", lit(target_date[6:8]))    # 일
+        .withColumn("hour", lit(target_date[8:10]))  # 시간
+    )
 
     # 저장 경로
-    s3_parquet_path = f"s3://{S3_BUCKET}/saramin/process_data/{S3_FOLDER}"
+    s3_parquet_path = f"s3://{S3_BUCKET}/saramin/process_data/"
 
-    # 폴더에 저장
-    renamed_df.write.mode("overwrite").parquet(s3_parquet_path)
+    # .partitionBy() 사용하여 파티션 저장 + 동적 파티션 업데이트 옵션 추가
+    partitioned_df.write \
+        .mode("overwrite") \
+        .option("partitionOverwriteMode", "dynamic") \
+        .partitionBy("year", "month", "day", "hour") \
+        .parquet(s3_parquet_path)
 
     logger.info(f"Uploaded Parquet to S3: {s3_parquet_path}")
 
 
 if __name__ == "__main__":
-    process_saramin_job_data()
+    main()

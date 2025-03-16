@@ -16,7 +16,7 @@ default_args = {
     dag_id="dev_saramin_project",
     default_args=default_args,
     description="Saramin 채용공고 원본 JSON저장 및 Parquet 변환",
-    schedule_interval="0 0-12/2 * * *",  # UTC 기준: 00시~12시, 2시간 간격 실행 / 한국 시간 기준: 09시~21시
+    schedule_interval="0 10-20/2 * * *",  # 한국 시간 기준: 10시~20시
     catchup=False, # 과거의 미실행된 DAG는 실행하지 않음 (현재 주기부터 실행됨)
 )
 
@@ -25,16 +25,18 @@ def saramin_dag():
     @task
     def fetch_data(data_interval_end):
         return fetch_saramin_job_data(target_date=data_interval_end)
+    
+    s3_path = fetch_data()
 
     process_data = GlueJobOperator(
         task_id="process_saramin_job_data",
         job_name="saramin-glue-job", 
-        region_name="us-east-1",
-        script_args={ # Xcom으로 가져오기
-            "--s3_path": "{{ ti.xcom_pull(task_ids='fetch_data') }}", 
+        region_name="ap-northeast-2",
+        script_args={
+            "--s3_path": s3_path, 
             "--target_date": "{{ data_interval_end.strftime('%Y%m%d%H') }}"
         },
     )
-    fetch_data() >> process_data
+    s3_path >> process_data
 
 saramin_dag()

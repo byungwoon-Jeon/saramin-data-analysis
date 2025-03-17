@@ -50,27 +50,54 @@ def get_analysis_output_path(s3_folder, bucket_name):
     else:
         raise ValueError("s3_folder 형식이 올바르지 않습니다. 예: s3://.../YYYY/MM/DD/")
 
-# UDF: location_name 변환 함수
+# 축약 -> 풀네임 매핑 사전
+province_mapping = {
+    "서울": "서울시",
+    "경기": "경기도",
+    "경남": "경상남도",
+    "경북": "경상북도",
+    "전남": "전라남도",
+    "전북": "전라북도",
+    "충남": "충청남도",
+    "충북": "충청북도",
+    "강원": "강원도",
+    "제주": "제주특별자치도",
+    "부산": "부산",
+    "대구": "대구",
+    "인천": "인천",
+    "광주": "광주",
+    "대전": "대전",
+    "울산": "울산",
+    "세종": "세종시"
+}
+
 def transform_location(loc):
     """
-    loc 값이 "서울 > 서울전체"이면 "서울 전체"로, 
-    "서울 > 강서구"이면 "서울시 강서구"로 변환
+    HTML 엔티티 &gt;를 실제 '>'로 치환 후,
+    예: "서울 &gt; 강남구" -> "서울시 강남구"
     """
-    if loc is None:
+    if not loc:
         return None
-    parts = loc.split(">")
-    if len(parts) == 2:
-        city = parts[0].strip()
-        district = parts[1].strip()
-        if district == "서울전체":
-            return f"{city} 전체"
-        else:
-            # city에 "시"가 없으면 붙여서 출력
-            if not city.endswith("시"):
-                city = f"{city}시"
-            return f"{city} {district}"
-    else:
+
+    # &gt; -> > 치환
+    loc = loc.replace("&gt;", ">")
+
+    # '>'로 split
+    parts = [x.strip() for x in loc.split(">") if x.strip()]
+    if not parts:
         return loc
+
+    # 첫 파트(시·도) 매핑
+    city = parts[0]
+    if city in province_mapping:
+        city = province_mapping[city]
+
+    # 나머지 파트 합치기
+    rest = " ".join(parts[1:])
+    if rest:
+        return f"{city} {rest}"
+    else:
+        return city
 
 transform_location_udf = udf(transform_location, StringType())
 
@@ -101,15 +128,25 @@ def main():
     df = spark.read.parquet(latest_file)
 
     # 날짜 컬럼 변환
+    
     df = df.withColumn(
         "posting_date",
-        date_format(to_timestamp(col("posting_date"), "yyyy-MM-dd'T'HH:mm:ssXXX"), "yyyy-MM-dd")
+        date_format(
+            to_timestamp(col("posting_date"), "yyyy-MM-dd'T'HH:mm:ssZ"),
+            "yyyy-MM-dd"
+        )
     ).withColumn(
         "opening_date",
-        date_format(to_timestamp(col("opening_date"), "yyyy-MM-dd'T'HH:mm:ssXXX"), "yyyy-MM-dd")
+        date_format(
+            to_timestamp(col("opening_date"), "yyyy-MM-dd'T'HH:mm:ssZ"),
+            "yyyy-MM-dd"
+        )
     ).withColumn(
         "expiration_date",
-        date_format(to_timestamp(col("expiration_date"), "yyyy-MM-dd'T'HH:mm:ssXXX"), "yyyy-MM-dd")
+        date_format(
+            to_timestamp(col("expiration_date"), "yyyy-MM-dd'T'HH:mm:ssZ"),
+            "yyyy-MM-dd"
+        )
     )
 
     # 삭제할 컬럼 목록
@@ -120,17 +157,16 @@ def main():
     ]
     df = df.drop(*columns_to_drop)
 
-    # job_name 컬럼을 콤마 기준으로 배열로 분리한 후 explode하여 각 값(job_name_single)으로 확장
-    df = df.withColumn("job_name_array", split(col("job_name"), ",")) \
-           .withColumn("job_name_single", explode(col("job_name_array")))
-    
-    # location_name 컬럼도 콤마 기준으로 배열로 분리한 후 explode하여 각 값(location_name_single)으로 확장
-    df = df.withColumn("location_name_array", split(col("location_name"), ",")) \
-           .withColumn("location_name_single", explode(col("location_name_array")))
-    
-    # location_name_single 값 변환
-    df = df.withColumn("location_name_single", transform_location_udf(col("location_name_single")))
-    
+    # keyword 컬럼을 콤마 기준으로 분리 및 explode
+    df = df.withColumn("keyword", explode(split(col("keyword"), "\\s*,\\s*")))
+
+    # job_name 컬럼을 콤마 기준으로 분리 및 explode
+    df = df.withColumn("job_name", explode(split(col("job_name"), "\\s*,\\s*")))
+
+    # location_name 컬럼도 콤마 기준으로 분리 & explode 후 변환
+    df = df.withColumn("location_name", explode(split(col("location_name"), "\\s*,\\s*"))) \
+           .withColumn("location_name", transform_location_udf(col("location_name")))
+
     # 분석용 데이터를 저장할 경로
     output_path = get_analysis_output_path(s3_folder, bucket_name)
     logger.info(f"Writing processed data to: {output_path}")

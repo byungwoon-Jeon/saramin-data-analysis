@@ -5,16 +5,16 @@ from airflow.providers.amazon.aws.operators.glue import GlueJobOperator
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2025, 3, 11, 10, 0),
+    'start_date': datetime(2025, 3, 11, 10, 10),
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
 
 with DAG(
-    dag_id='Saramin_etl_dag',
+    dag_id='saramin_etl_dags',
     default_args=default_args,
-    schedule_interval='0 10-20/2 * * *', 
-    catchup=False,
+    schedule_interval='10 10-20/2 * * *', 
+    catchup=True,
     description='Airflow DAG that triggers an AWS Glue job to process the latest update from the daily folder',
 ) as dag:
 
@@ -34,4 +34,5 @@ with DAG(
 	},
     )
     run_glue_job
+
 

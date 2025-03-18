@@ -149,8 +149,24 @@
 - 사용자의 **이력서 또는 상세 기술 스택을 반영한 맞춤형 추천 시스템 구축**
 
 ## 4. 대시보드
-
-
+#### <사용자 데이터 입력>
+<img src="https://github.com/user-attachments/assets/6fd5a096-6aba-429f-9019-fa8d7d91efad"  width="200" height="200"/><br>
+#### <조회수가 높은 공고>
+<img src="https://github.com/user-attachments/assets/31a93ab0-fc9e-4412-bb4c-4d514bb2917c"  width="1000" height="400"/><br>
+#### <지원자수가 많은 공고>
+<img src="https://github.com/user-attachments/assets/8b293aa0-bdbf-4731-88cd-8b97dfb69522"  width="1000" height="400"/><br>
+#### <최신 공고>
+<img src="https://github.com/user-attachments/assets/85a9adbb-d95e-4445-b4c8-e3f556abfbbd"  width="1000" height="400"/><br>
+#### <마감임박 공고>
+<img src="https://github.com/user-attachments/assets/1285ac0f-4b16-4895-a51b-957cfabf5913"  width="1000" height="400"/><br>
+#### <지역, 학력, 경력별 공고 차트>
+<img src="https://github.com/user-attachments/assets/f98c0054-42fb-4ed3-aa8d-ef02f8583309"  width="1000" height="400"/><br>
+#### <키워드 및 직무별 공고>
+<img src="https://github.com/user-attachments/assets/151506b4-572c-47ff-a328-2762a232ed84"  width="1000" height="400"/><br>
+#### <산업별 채용 공고 추이>
+<img src="https://github.com/user-attachments/assets/81b2a21a-b978-4a66-8b51-cfe894ed40d2"  width="1000" height="400"/><br>
+#### <직무별 채용 혜택>
+<img src="https://github.com/user-attachments/assets/cdda01e6-ce6e-49b4-8a0e-e679d792c675"  width="1000" height="400"/><br>
 
 ## 5. 활용 기술 및 프레임워크
 ### 데이터 수집

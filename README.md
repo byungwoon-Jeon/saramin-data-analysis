@@ -160,13 +160,13 @@
 #### <마감임박 공고>
 <img src="https://github.com/user-attachments/assets/1285ac0f-4b16-4895-a51b-957cfabf5913"  width="1000" height="400"/><br>
 #### <지역, 학력, 경력별 공고 차트>
-<img src="https://github.com/user-attachments/assets/f98c0054-42fb-4ed3-aa8d-ef02f8583309"  width="1000" height="400"/><br>
+<img src="https://github.com/user-attachments/assets/f98c0054-42fb-4ed3-aa8d-ef02f8583309"  width="1000" height="600"/><br>
 #### <키워드 및 직무별 공고>
-<img src="https://github.com/user-attachments/assets/151506b4-572c-47ff-a328-2762a232ed84"  width="1000" height="400"/><br>
+<img src="https://github.com/user-attachments/assets/151506b4-572c-47ff-a328-2762a232ed84"  width="1000" height="300"/><br>
 #### <산업별 채용 공고 추이>
-<img src="https://github.com/user-attachments/assets/81b2a21a-b978-4a66-8b51-cfe894ed40d2"  width="1000" height="400"/><br>
+<img src="https://github.com/user-attachments/assets/81b2a21a-b978-4a66-8b51-cfe894ed40d2"  width="1000" height="300"/><br>
 #### <직무별 채용 혜택>
-<img src="https://github.com/user-attachments/assets/cdda01e6-ce6e-49b4-8a0e-e679d792c675"  width="1000" height="400"/><br>
+<img src="https://github.com/user-attachments/assets/cdda01e6-ce6e-49b4-8a0e-e679d792c675"  width="1000" height="300"/><br>
 
 ## 5. 활용 기술 및 프레임워크
 ### 데이터 수집

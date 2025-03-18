@@ -87,7 +87,7 @@ def main():
     # 최종 파일명
     filename = f"saramin_process_data_{server_time}.parquet"
 
-    # 임시 저장 경로 설정
+    # 임시 저장 경로 설정 -> 임시 저장 할 필요는 없지만 한 폴더에 쌓아두기 위해 임시로 저장
     s3_temp_path = f"s3://{S3_BUCKET}/saramin/process_data/{S3_FOLDER}temp/"
 
     # 임시 폴더에 저장

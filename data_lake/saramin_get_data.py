@@ -78,5 +78,6 @@ def fetch_saramin_job_data(target_date) -> str:
     except Exception as e:
         logging.error(f"S3 업로드 실패: {e}")
         raise
-
+    
+    # 이 주소를 바로 다음 task로 return
     return s3_path

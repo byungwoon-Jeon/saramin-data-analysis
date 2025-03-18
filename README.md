@@ -81,10 +81,11 @@
 ### 3-2 데이터 레이크
 #### 1) 원본 데이터 수집
 - **API 호출 정책 및 데이터 수집 범위**
-  <br>사용 API: 사람인 채용공고 API <br>
-  <br> 데이터 요청 주기: 오전 10시 ~ 오후 8시, 2시간 간격으로 하루 총 6회 호출 <br>
-  <br> 데이터 수집 기준: IT개발·데이터 업종과 직무 공고만 필터링 <br>
-  <br> 호출 파라미터 : <br>
+  - 사용 API: 사람인 채용공고 API 
+  - 데이터 요청 주기: 오전 10시 ~ 오후 8시, 2시간 간격으로 하루 총 6회 호출 
+  - 데이터 수집 기준: IT개발·데이터 업종과 직무 공고만 필터링 
+  - 호출 파라미터 :
+    
   <img src="https://github.com/user-attachments/assets/5093b9c2-053a-42f1-8a6a-38cd84197b3d"  width="400" height="120"/><br>
 - **데이터 저장**
   
@@ -92,22 +93,22 @@
 
 #### 2) 데이터 전처리 및 Parquet 변환
 - **AWS Glue**
-  <br>Glue에서 SparSession 생성하여 Spark로 분산처리<br>
-  <br>S3의 버킷에 저장 후 Glue에서 Script 호출<br>
+  - Glue에서 SparSession 생성하여 Spark로 분산처리
+  - S3의 버킷에 저장 후 Glue에서 Script 호출
 - **데이터 저장**
   
   <img src="https://github.com/user-attachments/assets/37f24811-5647-44a0-b9ab-c1e2bf48e9cc"  width="400" height="120"/><br>
 - **Parquet 파일 구조**
-  <br>데이터 분석에 필요하지 않은 정보 제거 (필터링)<br>
-  <br>unixtime 형식을 datetime 형식으로 변경<br>
+  - 데이터 분석에 필요하지 않은 정보 제거 (필터링)
+  - unixtime 형식을 datetime 형식으로 변경
 
 #### 3) Airflow DAG
 - **원본 데이터 수집 task**
-  <br>Airflow에서 실행<br>
-  <br>사람인 API 호출하여 데이터 수집 후 JSON으로 S3 버킷에 저장<br>
+  - Airflow에서 실행
+  - 사람인 API 호출하여 데이터 수집 후 JSON으로 S3 버킷에 저장
 - **전처리 및 Parquet변환 task**
-  <br>Airflow에서 Glue Job 생성 및 호출<br>
-  <br>Glue에서 Spark사용하여 전처리 후 Parquet로 변환하여 S3 버킷에 저장<br>
+  - Airflow에서 Glue Job 생성 및 호출
+  - Glue에서 Spark사용하여 전처리 후 Parquet로 변환하여 S3 버킷에 저장
 
 ### 3-3 데이터 마트
 #### 1) 원본 데이터를 분석용으로 적합하게 만들기 위한 작업 수행
@@ -170,8 +171,8 @@
 ## 6. 프로젝트 회고
 ### 6-1 프로젝트 결과물에 대한 완성도 평가 (10점 만점 기준)
 <img src="https://github.com/user-attachments/assets/cb7dc1a4-8e13-4766-94e3-70cbb851dd7b"  width="1000" height="400"/><br>
-<br>**종합 점수: 7.7/10**<br>
-<br>**기본적인 데이터 엔지니어링 파이프라인은 완성도 높게 구축했지만, 개인화된 추천 기능을 강화하면 더욱 효과적인 시스템이 될 것**<br>
+- **종합 점수: 7.7/10**
+- **기본적인 데이터 엔지니어링 파이프라인은 완성도 높게 구축했지만, 개인화된 추천 기능을 강화하면 더욱 효과적인 시스템이 될 것**
 
 ### 6-2 잘한 점과 아쉬운 점
 #### 잘한 점
